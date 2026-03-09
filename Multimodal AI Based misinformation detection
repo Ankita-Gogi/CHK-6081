@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Misinformation Detection</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #020617;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Background animation */
+
+        .bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .circle {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: rgba(56, 189, 248, 0.08);
+            border-radius: 50%;
+            animation: float 18s infinite;
+        }
+
+        @keyframes float {
+
+            0% {
+                transform: translateY(0) rotate(0)
+            }
+
+            50% {
+                transform: translateY(-200px) rotate(180deg)
+            }
+
+            100% {
+                transform: translateY(0) rotate(360deg)
+            }
+
+        }
+
+        .c1 {
+            top: 10%;
+            left: 20%
+        }
+
+        .c2 {
+            top: 70%;
+            left: 80%
+        }
+
+        .c3 {
+            top: 40%;
+            left: 50%
+        }
+
+        .c4 {
+            top: 80%;
+            left: 10%
+        }
+
+        .c5 {
+            top: 25%;
+            left: 75%
+        }
+
+        /* Main Container */
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: auto;
+            margin-top: 60px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 25px;
+            opacity: 0.8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            transition: .3s;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 0 15px #38bdf8;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: none;
+            padding: 10px;
+        }
+
+        .btn {
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #38bdf8;
+            cursor: pointer;
+        }
+
+        .detect {
+            display: block;
+            margin: 25px auto;
+            padding: 14px 30px;
+            background: #22c55e;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .detect:hover {
+            transform: scale(1.05);
+        }
+
+        .result {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        .scoreBar {
+            width: 100%;
+            height: 15px;
+            background: #111;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .scoreFill {
+            height: 100%;
+            width: 0%;
+            background: red;
+            transition: 1s;
+        }
+
+        img {
+            margin-top: 10px;
+            border-radius: 10px;
+            width: 100%;
+            display: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="bg">
+
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <div class="circle c3"></div>
+        <div class="circle c4"></div>
+        <div class="circle c5"></div>
+
+    </div>
+
+    <div class="container">
+
+        <h1>Multimodal AI Misinformation Detection</h1>
+        <p class="subtitle">Analyze News Articles and Images using AI Logic</p>
+
+        <div class="grid">
+
+            <div class="card">
+
+                <h3>Insert Image</h3>
+
+                <input type="file" id="imageInput" accept="image/*">
+
+                <button class="btn" onclick="previewImage()">Preview</button>
+
+                <img id="imagePreview">
+
+            </div>
+
+            <div class="card">
+
+                <h3>Insert Article</h3>
+
+                <textarea id="articleText" placeholder="Paste news article here..."></textarea>
+
+            </div>
+
+        </div>
+
+        <button class="detect" onclick="detect()">Analyze Misinformation</button>
+
+        <div class="result" id="resultBox">
+
+            AI Risk Score will appear here
+
+            <div class="scoreBar">
+                <div class="scoreFill" id="scoreFill"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        let fakeWords = [
+
+            "shocking", "unbelievable", "miracle cure", "100% guaranteed", "click here now", "share immediately",
+            "viral truth", "government hiding", "secret revealed", "urgent warning", "forward this message",
+            "they dont want you to know", "hidden truth", "magic remedy", "exclusive leaked", "banned information",
+            "must watch", "breaking secret", "big conspiracy", "massive coverup", "exposed truth", "secret formula",
+            "instant cure", "guaranteed cure", "miracle treatment", "no doctor needed", "ancient remedy",
+            "magic medicine", "free money trick", "secret hack", "unknown method", "life changing trick",
+            "one weird trick", "banned cure", "hidden medicine", "suppressed research", "elite secret",
+            "dangerous truth", "classified file", "forbidden knowledge", "top secret", "secret document",
+            "exposed document", "viral message", "viral claim", "shocking truth", "unbelievable news",
+            "must read", "read before deleted", "urgent alert", "final warning", "last chance",
+            "send to everyone", "share with friends", "spread quickly", "viral news", "danger alert",
+            "unknown cure", "lost secret", "mystery cure", "mysterious discovery", "hidden formula",
+            "exposed scientist", "government lie", "media lie", "mainstream lie", "fake media",
+            "dangerous conspiracy", "secret vaccine", "hidden vaccine", "forbidden treatment", "miracle drug",
+            "shocking discovery", "top secret discovery", "mystery virus", "hidden disease", "secret disease",
+            "unknown illness", "secret government lab", "dangerous experiment", "illegal research",
+            "dark secret", "hidden agenda", "powerful secret", "unknown scientist", "mysterious expert",
+            "viral conspiracy", "big secret", "unknown fact", "mystery solution", "exposed lie",
+            "breaking conspiracy", "forbidden science", "hidden cure", "unknown remedy", "secret remedy",
+            "miracle plant", "miracle herb", "ancient cure", "lost medicine", "mystery medicine",
+            "magic pill", "super cure", "instant medicine", "fast cure", "secret therapy",
+            "secret chemical", "hidden compound", "danger chemical", "mystery formula", "unknown formula",
+            "banned substance", "miracle supplement", "miracle vitamin", "magic powder", "instant health",
+            "overnight cure", "overnight success", "secret trick", "viral trick", "money trick",
+            "guaranteed profit", "fast profit", "instant income", "secret investment", "hidden market",
+            "unknown market", "mystery investment", "secret trading", "hidden stock", "unknown crypto",
+            "secret crypto", "viral crypto", "guaranteed crypto", "instant crypto", "fast crypto",
+            "unknown billionaire secret", "secret wealth trick", "hidden money method", "instant millionaire",
+            "overnight millionaire", "secret millionaire trick", "magic investment", "fast money",
+            "guaranteed income", "secret profit", "unknown profit", "viral profit", "instant profit",
+            "mystery income", "hidden income", "dangerous investment", "secret economy", "fake economy",
+            "hidden economy", "secret banking", "unknown banking", "mystery bank", "secret fund",
+            "hidden fund", "secret account", "unknown account", "mystery transaction", "secret payment",
+            "hidden payment", "mysterious transfer", "unknown transfer", "viral transfer", "secret leak",
+            "massive leak", "huge leak", "danger leak", "classified leak", "unknown leak",
+            "viral scandal", "secret scandal", "hidden scandal", "massive scandal", "government scandal",
+            "political scandal", "media scandal", "corporate scandal", "financial scandal", "banking scandal",
+            "health scandal", "science scandal", "medical scandal", "vaccine scandal", "drug scandal",
+            "unknown danger", "hidden danger", "secret danger", "viral danger", "danger message",
+            "urgent message", "emergency message", "secret emergency", "hidden emergency", "viral emergency",
+            "unknown threat", "secret threat", "hidden threat", "danger threat", "viral threat"
+
+        ];
+
+        let trustedWords = [
+
+            "according to research", "scientific study", "data analysis", "official report",
+            "government report", "research published", "scientists confirmed", "peer reviewed",
+            "clinical trial", "fact checked", "verified source", "investigation report",
+            "medical journal", "researchers found", "data collected", "survey results",
+            "university research", "laboratory tested", "evidence based", "published study",
+            "research paper", "scientific paper", "journal publication", "academic journal",
+            "university report", "research institute", "scientific evidence", "peer review article",
+            "clinical evidence", "experimental results", "scientific findings", "field research",
+            "lab experiment", "scientific observation", "documented research", "peer validation",
+            "scientific validation", "reviewed article", "verified data", "confirmed report",
+            "government statement", "official announcement", "press conference", "policy report",
+            "regulatory report", "agency report", "official data", "public record",
+            "transparent data", "published dataset", "research methodology", "scientific method",
+            "controlled experiment", "statistical analysis", "data modeling", "evidence report",
+            "investigative journalism", "fact checking", "verified claim", "expert opinion",
+            "medical expert", "scientific expert", "policy expert", "data scientist",
+            "university professor", "research scholar", "laboratory researcher", "scientific team",
+            "research group", "scientific institute", "health organization", "medical association",
+            "public health report", "world health report", "health study", "medical research",
+            "hospital study", "clinical study", "health data", "disease study",
+            "epidemiological study", "population study", "longitudinal study", "meta analysis",
+            "systematic review", "controlled trial", "double blind trial", "scientific review",
+            "research conclusion", "scientific conclusion", "study conclusion", "data conclusion",
+            "policy analysis", "economic analysis", "financial analysis", "market analysis",
+            "research summary", "scientific summary", "data summary", "analysis report",
+            "validated model", "statistical model", "scientific model", "predictive model",
+            "verified analysis", "independent analysis", "peer analysis", "third party verification",
+            "independent verification", "external review", "quality review", "scientific board review",
+            "journal editor review", "research council report", "scientific committee report",
+            "government committee report", "public health committee", "scientific advisory board",
+            "global research report", "international study", "cross country study", "global dataset",
+            "international journal", "research collaboration", "scientific collaboration",
+            "academic collaboration", "peer collaboration", "university collaboration",
+            "research partnership", "scientific partnership", "international research network",
+            "research consortium", "global science report", "international medical journal",
+            "public science database", "research archive", "scientific archive", "open data source",
+            "trusted dataset", "public dataset", "open research", "transparent research"
+
+        ];
+        function previewImage() {
+
+            let file = document.getElementById("imageInput").files[0];
+
+            if (file) {
+
+                let img = document.getElementById("imagePreview");
+                img.src = URL.createObjectURL(file);
+                img.style.display = "block";
+
+            }
+
+        }
+
+        function detect() {
+
+            let text = document.getElementById("articleText").value.toLowerCase();
+            let image = document.getElementById("imageInput").files[0];
+
+            let fakeScore = 0;
+            let realScore = 0;
+
+            fakeWords.forEach(w => {
+                if (text.includes(w)) { fakeScore += 10 }
+            });
+
+            trustedWords.forEach(w => {
+                if (text.includes(w)) { realScore += 12 }
+            });
+
+            if (text.length > 200) { realScore += 10 }
+            else if (text.length > 0) { fakeScore += 5 }
+
+            let imageResult = "No Image";
+
+            if (image) {
+
+                let size = image.size / (1024 * 1024);
+                let name = image.name.toLowerCase();
+
+                if (size < 0.1 || name.includes("ai") || name.includes("fake")) {
+
+                    fakeScore += 15
+                    imageResult = "❌ Image looks AI Generated"
+
+                } else {
+
+                    realScore += 10
+                    imageResult = "✅ Image looks Real"
+
+                }
+
+            }
+
+            let total = fakeScore + realScore;
+            let risk = Math.round((fakeScore / Math.max(total, 1)) * 100);
+
+            let textResult = "";
+
+            if (fakeScore > realScore) {
+                textResult = "❌ Text appears Fake"
+            } else if (text.length > 0) {
+                textResult = "✅ Text appears Reliable"
+            } else {
+                textResult = "No Text Provided"
+            }
+
+            document.getElementById("resultBox").innerHTML =
+
+                `<b>${textResult}</b><br><br>
+<b>${imageResult}</b><br><br>
+AI Fake Risk Score: ${risk}%
+
+<div class="scoreBar">
+<div class="scoreFill" id="scoreFill"></div>
+</div>`;
+
+            setTimeout(() => {
+                document.getElementById("scoreFill").style.width = risk + "%";
+            }, 100)
+
+        }
+
+    </script>
+
+</body>
+
+</html>
